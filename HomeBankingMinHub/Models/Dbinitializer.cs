@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 
+
 namespace HomeBankingMinHub.Models
 {
     public class Dbinitializer
@@ -39,7 +40,7 @@ namespace HomeBankingMinHub.Models
                 {
                     var accounts = new Account[]
                     {
-                        new Account{ClientId= accountRoig.Id, CreationDate = DateTime.Now, Number=String.Empty, Balance=5000}
+                        new Account{ClientId= accountRoig.Id, CreationDate = DateTime.Now, Number="CTA001", Balance=5000}
                     };
                     foreach (Account account in accounts)
                     {
@@ -48,6 +49,25 @@ namespace HomeBankingMinHub.Models
                 }
                 context.SaveChanges();
 
+            }
+
+            if (!context.Transactions.Any())
+            {
+                var account1 = context.Accounts.FirstOrDefault(c => c.Number == "CTA001");
+                if (account1 != null)
+                {
+                    var transactions = new Transaction[]
+                    {
+                        new Transaction {AccountId = account1.Id, Amount = 10000, Date = DateTime.Now.AddHours(-5), Description = "Transferencia Recibida", Type = TransactionType.CREDIT},
+                        new Transaction {AccountId = account1.Id, Amount = -2000,Date= DateTime.Now.AddHours(-6), Description = "Compra en tienda Mercado Libre", Type = TransactionType.DEBIT},
+                        new Transaction {AccountId = account1.Id, Amount = -3000, Date = DateTime.Now.AddHours(-7), Description = "Compra en tienda xxxx", Type = TransactionType.DEBIT},
+                    };
+                    foreach (Transaction transaction in transactions)
+                    {
+                        context.Transactions.Add(transaction);
+                    }
+                    context.SaveChanges();
+                }
             }
         }
 

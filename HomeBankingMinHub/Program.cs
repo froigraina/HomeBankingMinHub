@@ -23,6 +23,7 @@ namespace HomeBankingMinHub
                 try
                 {
                     var context = services.GetRequiredService<HomeBankingContext>();
+            
                     Dbinitializer.Initialize(context);
                 }
                 catch (Exception ex)

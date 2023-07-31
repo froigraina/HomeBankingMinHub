@@ -30,6 +30,7 @@ namespace HomeBankingMinHub
             services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
             services.AddDbContext<HomeBankingContext>(options => options.UseSqlServer(Configuration.GetConnectionString("HomeBankingConnection")));
             services.AddScoped<IClientRepository, ClientRepository>();
+            services.AddScoped<IAccountRepository,  AccountRepository>();
 
         }
 
