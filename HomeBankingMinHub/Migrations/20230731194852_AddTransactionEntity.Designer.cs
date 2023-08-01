@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HomeBankingMinHub.Migrations
 {
     [DbContext(typeof(HomeBankingContext))]
-    [Migration("20230728173232_addTransactionEntity")]
-    partial class addTransactionEntity
+    [Migration("20230731194852_AddTransactionEntity")]
+    partial class AddTransactionEntity
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -90,8 +90,8 @@ namespace HomeBankingMinHub.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
