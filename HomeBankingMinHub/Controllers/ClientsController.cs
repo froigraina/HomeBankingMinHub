@@ -1,5 +1,6 @@
 ﻿using HomeBankingMinHub.Models;
 using HomeBankingMinHub.Models.DTOS;
+using HomeBankingMinHub.Models.DTOSs;
 using HomeBankingMinHub.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -40,7 +41,26 @@ namespace HomeBankingMinHub.Controllers
                             Balance = ac.Balance,
                             CreationDate = ac.CreationDate,
                             Number = ac.Number
-                        }).ToList()
+                        }).ToList(),
+                        Credits = client.ClientLoans.Select(cl => new ClientLoanDTO
+                        {
+                            Id = cl.Id,
+                            LoanId = cl.LoanId,
+                            Name = cl.Loan.Name,
+                            Amount = cl.Amount,
+                            Payments = int.Parse(cl.Payments)
+                        }).ToList(),
+                        Cards = client.Cards.Select(c => new CardDTO
+                        {
+                            Id = c.Id,
+                            CardHolder = c.CardHolder,
+                            Color = c.Color,
+                            Cvv = c.Cvv,
+                            FromDate = c.FromDate,
+                            Number = c.Number,
+                            ThruDate = c.ThruDate,
+                            Type = c.Type
+                        }).ToList(),
                     };
                     clientsDTO.Add(newClientDTO);
                 }
@@ -76,7 +96,26 @@ namespace HomeBankingMinHub.Controllers
                         Balance = ac.Balance,
                         CreationDate = ac.CreationDate,
                         Number = ac.Number
-                    }).ToList()
+                    }).ToList(),
+                    Credits = client.ClientLoans.Select(cl => new ClientLoanDTO
+                    {
+                        Id = cl.Id,
+                        LoanId = cl.LoanId,
+                        Name = cl.Loan.Name,
+                        Amount = cl.Amount,
+                        Payments = int.Parse(cl.Payments)
+                    }).ToList(),
+                    Cards = client.Cards.Select(c => new CardDTO
+                    {
+                        Id = c.Id,
+                        CardHolder = c.CardHolder,
+                        Color = c.Color,
+                        Cvv = c.Cvv,
+                        FromDate = c.FromDate,
+                        Number = c.Number,
+                        ThruDate = c.ThruDate,
+                        Type = c.Type
+                    }).ToList(),
                 };
                 return Ok(clientDTO);
             }

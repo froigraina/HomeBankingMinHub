@@ -1,5 +1,6 @@
 using HomeBankingMinHub.Models;
 using HomeBankingMinHub.Repositories;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,17 @@ namespace HomeBankingMinHub
             services.AddDbContext<HomeBankingContext>(options => options.UseSqlServer(Configuration.GetConnectionString("HomeBankingConnection")));
             services.AddScoped<IClientRepository, ClientRepository>();
             services.AddScoped<IAccountRepository,  AccountRepository>();
+            //Autenticacion
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
+            {
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+                options.LoginPath = new Microsoft.AspNetCore.Http.PathString("/index.html");
+            });
+            //Autentication
+            services.AddAuthentication(options =>
+            {
+                options.AddPolicy("ClientOnly", policy => policy.RequireClaim("Client"));
+            });
 
         }
 
@@ -49,6 +61,8 @@ namespace HomeBankingMinHub
             app.UseStaticFiles();
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
