@@ -39,9 +39,9 @@ namespace HomeBankingMinHub
                 options.LoginPath = new Microsoft.AspNetCore.Http.PathString("/index.html");
             });
             //Autentication
-            services.AddAuthentication(options =>
+            services.AddAuthorization(options =>
             {
-                options.AddPolicy("ClientOnly", policy => policy.RequireClaim("Client"));
+                options.AddPolicy("ClientOnly", policy => policy.RequireClaim("Client")); //???????????????????????????????
             });
 
         }
