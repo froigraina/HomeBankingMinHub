@@ -1,4 +1,8 @@
-﻿using HomeBankingMinHub.Models;
+﻿using HomeBanking.Controllers;
+using HomeBanking.Models;
+using HomeBanking.Models.DTOs;
+using HomeBanking.Repositories;
+using HomeBankingMinHub.Models;
 using HomeBankingMinHub.Models.DTOS;
 using HomeBankingMinHub.Models.DTOSs;
 using HomeBankingMinHub.Repositories;
@@ -8,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Security.AccessControl;
 
 namespace HomeBankingMinHub.Controllers
 {
@@ -16,15 +21,16 @@ namespace HomeBankingMinHub.Controllers
     public class ClientsController : ControllerBase
     {
         private IClientRepository _clientRepository;
-        private IAccountRepository _accountRepository;
-        private ICardRepository _cardRepository;
+        private AccountsController _accountsController;
+        private CardsController _cardsController;
 
 
-        public ClientsController(IClientRepository clientRepository, IAccountRepository accountRepository, ICardRepository cardRepository)
+        public ClientsController(IClientRepository clientRepository, AccountsController accountsController, CardsController cardsController)
         {
             _clientRepository = clientRepository;
-            _accountRepository = accountRepository;
-            _cardRepository = cardRepository;
+            _accountsController = accountsController;
+            _cardsController = cardsController;
+
 
         }
 
@@ -194,9 +200,8 @@ namespace HomeBankingMinHub.Controllers
         public IActionResult Post([FromBody] Client client)
 
         {
-            Random random = new Random();
-            Account account;
-            string newAccountNumber;
+            Random rnd = new Random();
+
             try
             {
                 if (String.IsNullOrEmpty(client.Email) || String.IsNullOrEmpty(client.Password) || String.IsNullOrEmpty(client.FirstName) || String.IsNullOrEmpty(client.LastName))
@@ -218,22 +223,18 @@ namespace HomeBankingMinHub.Controllers
                 };
                 _clientRepository.Save(newClient);
 
-                do
-                {
-                    newAccountNumber = "CTA" + random.Next(001, 10000);
-                    account = _accountRepository.FindByNumber(newAccountNumber);
-                } while (account != null);
+                //do
+                //{
+                //    newAccountNumber = "CTA" + new Random().Next(100000, 999999).ToString();
+                //    account = _accountRepository.FindByNumber(newAccountNumber);
+                //} while (account != null);
 
-                Account newAccount = new Account
+                AccountDTO newAccountDTO = _accountsController.Post(newClient.Id);
+                if (newAccountDTO == null)
                 {
-                    Number = newAccountNumber,
-                    CreationDate = DateTime.Now,
-                    Balance = 0.0,
-                    ClientId = newClient.Id,
-                };
-                _accountRepository.Save(newAccount);
+                    return StatusCode(500, "account not created at accountsController");
+                }
                 return Created("", newClient);
-
 
             }
             catch (Exception ex)
@@ -246,9 +247,8 @@ namespace HomeBankingMinHub.Controllers
 
         public IActionResult Post()
         {
-            Random random = new Random();
-            Account account;
-            string newAccountNumber;
+            IEnumerable<AccountDTO> accounts;
+
             try
             {
                 string email = User.FindFirst("Client") != null ? User.FindFirst("Client").Value : string.Empty;
@@ -263,28 +263,15 @@ namespace HomeBankingMinHub.Controllers
                     return Forbid("No existe el cliente");
                 }
 
-                //valida maximo de cuentas
-                if (client.Accounts.Count >= 3)
+                accounts = client.Accounts.Select(ac => new AccountDTO
                 {
-                    return Forbid("Supera el maximo de cuentas permitidas");
-                }
+                    Id = ac.Id,
+                    Balance = ac.Balance,
+                    CreationDate = ac.CreationDate,
+                    Number = ac.Number
+                }).ToList();
 
-                //valida numero de cuenta existente
-                do
-                {
-                    newAccountNumber = "CTA" + random.Next(001, 10000);
-                    account = _accountRepository.FindByNumber(newAccountNumber);
-                } while (account != null);
-
-                Account newAccount = new Account
-                {
-                    Number = newAccountNumber,
-                    CreationDate = DateTime.Now,
-                    Balance = 0.0,
-                    ClientId = client.Id,
-                };
-                _accountRepository.Save(newAccount);
-                return Created("", newAccount);
+                return Ok(accounts);
             }
             catch (Exception ex)
             {
@@ -292,61 +279,144 @@ namespace HomeBankingMinHub.Controllers
             }
         }
 
-        [HttpPost("current/cards")]
-        public IActionResult Post([FromBody] Card card)
+        [HttpPost("current/accounts")]
+        public IActionResult PostAccount()
         {
-            Random random = new Random();
-            string newCardNumber;
-            Card cardAux;
             try
             {
                 string email = User.FindFirst("Client") != null ? User.FindFirst("Client").Value : String.Empty;
                 if (email == String.Empty)
                 {
-                    return Forbid("Don`t hace authorization");
+                    return Forbid();
                 }
 
                 Client client = _clientRepository.FindByEmail(email);
                 if (client == null)
                 {
-                    return Forbid("Client doesn`t exist");
+                    return Forbid("not existing client");
                 }
 
-                //validar data
-                if (String.IsNullOrEmpty(card.Type) ||
-                    String.IsNullOrEmpty(card.Color))
+                //validate max accounts
+                if (client.Accounts.Count >= 3)
                 {
-                    return StatusCode(403, "Datos invalidos");
+                    return Forbid("$\"Over max 3 cards permitted\"");
                 }
 
-                //validar numero de tarjeta
-                do
-                {
-                    newCardNumber = $"{random.Next(111, 9999)}-{random.Next(1111, 9999)}-{random.Next(1111, 9999)}-{random.Next(1111, 9999)}";
-                    cardAux = _cardRepository.FindByNumber(newCardNumber);
-                }
-                while (cardAux != null);
+                var account = _accountsController.Post(client.Id);
 
-                Card newCard = new Card()
+                if (account == null)
                 {
-                    CardHolder = $"{client.FirstName} {client.LastName}",
-                    Type = card.Type,
-                    Color = card.Color,
-                    Number = newCardNumber,
-                    Cvv = random.Next(100, 999),
-                    FromDate = DateTime.Now,
-                    ThruDate = DateTime.Now.AddYears(5),
-                    ClientId = client.Id,
-                };
-                _cardRepository.Save(newCard);
-                return Created("", newCard);
+                    return StatusCode(500, "account not created at accountsController");
+                }
+
+                return Created("", account);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
         }
+        [HttpGet("current/cards")]
+        public IActionResult GetCards()
+        {
+            IEnumerable<CardDTO> cards;
+
+            try
+            {
+                string email = User.FindFirst("Client") != null ? User.FindFirst("Client").Value : String.Empty;
+                if (email == String.Empty)
+                {
+                    return Forbid();
+                }
+
+                Client client = _clientRepository.FindByEmail(email);
+
+                if (client == null)
+                {
+                    return Forbid();
+                }
+
+                cards = client.Cards.Select(ac => new CardDTO
+                {
+                    Id = ac.Id,
+                    CardHolder = ac.CardHolder,
+                    Color = ac.Color,
+                    Cvv = ac.Cvv,
+                    FromDate = ac.FromDate,
+                    Number = ac.Number,
+                    ThruDate = ac.ThruDate,
+                    Type = ac.Type
+
+                }).ToList();
 
 
+                return Ok(cards);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        [HttpPost("current/cards")]
+        public IActionResult PostCard([FromBody] Card card)
+        {
+            string cardHolder = String.Empty;
+            string newCardType = String.Empty;
+            int cardsAmount = 0;
+
+            try
+            {
+                string email = User.FindFirst("Client") != null ? User.FindFirst("Client").Value : String.Empty;
+                if (email == String.Empty)
+                {
+                    return Forbid("Do not have authorization");
+                }
+
+                Client client = _clientRepository.FindByEmail(email);
+                if (client == null)
+                {
+                    return Forbid("Not existing client");
+                }
+
+                //validate data
+                if (String.IsNullOrEmpty(card.Type) ||
+                    String.IsNullOrEmpty(card.Color) ||
+                    !Card.IsCardType(card.Type) ||
+                    !Card.IsCardColor(card.Color))
+                {
+                    return StatusCode(403, "Invalid Data");
+                }
+
+                foreach (Card cardAux in client.Cards)
+                {
+                    if (cardAux.Type == card.Type)
+                    {
+                        cardsAmount++;
+                    }
+                }
+
+                if (cardsAmount >= 3)
+                {
+                    return Forbid($"Over max card type {card.Type} permitted");
+                }
+
+                cardHolder = $"{client.FirstName} {client.LastName}";
+
+                CardDTO newCardDTO = _cardsController.Post(cardHolder, client.Id, card);
+                if (newCardDTO == null)
+                {
+                    return StatusCode(403, "Card not created at cardsController");
+                }
+
+                return Created("", newCardDTO);
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
+
 }
+

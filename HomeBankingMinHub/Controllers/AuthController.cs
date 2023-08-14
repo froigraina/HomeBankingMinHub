@@ -8,7 +8,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System;
 using HomeBankingMinHub.Models;
-using HomeBankingMinHub.Repositories;
+using HomeBanking.Repositories;
 
 namespace HomeBankingMinHub.Controllers
 {

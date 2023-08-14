@@ -1,6 +1,6 @@
-﻿using HomeBankingMinHub.Models;
+﻿using HomeBanking.Repositories;
+using HomeBankingMinHub.Models;
 using HomeBankingMinHub.Models.DTOS;
-using HomeBankingMinHub.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -90,6 +90,47 @@ namespace HomeBankingMinHub.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost]
+        public AccountDTO Post (long clientID)
+        {
+            Random rnd = new Random();
+            Account account;
+            string newAccountNumber;
+            try
+            {
+                //look for existing account number
+                do
+                {
+                    newAccountNumber = "CTA-"+ rnd.Next(100000,999999);
+                    account = _accountRepository.FindByNumber(newAccountNumber);
+                }
+                while 
+                    (account != null);
+                
+                Account newAccount = new Account
+                {
+                    Number = newAccountNumber,
+                    CreationDate = DateTime.Now,
+                    Balance = 0.0,
+                    ClientId = clientID
+                };
+
+                _accountRepository.Save(newAccount);
+                AccountDTO accountDTO = new AccountDTO
+                {
+                    Id = newAccount.Id,
+                    Number = newAccount.Number,
+                    CreationDate = newAccount.CreationDate,
+                    Balance = newAccount.Balance,
+                };
+                return accountDTO;
+            }
+            catch
+            {
+                return null;
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using HomeBankingMinHub.Models.Enum;
+﻿using HomeBanking.Models;
+using HomeBankingMinHub.Models.Enum;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;

@@ -1,3 +1,4 @@
+using HomeBanking;
 using HomeBankingMinHub.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;

@@ -1,11 +1,16 @@
+using HomeBanking.Controllers;
+using HomeBanking.Models;
+using HomeBanking.Repositories;
+using HomeBankingMinHub.Controllers;
 using HomeBankingMinHub.Models;
-using HomeBankingMinHub.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileSystemGlobbing.Internal.Patterns;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
@@ -13,7 +18,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace HomeBankingMinHub
+namespace HomeBanking
 {
     public class Startup
     {
@@ -28,23 +33,33 @@ namespace HomeBankingMinHub
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
-            services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
+            //Add dateabese context
             services.AddDbContext<HomeBankingContext>(options => options.UseSqlServer(Configuration.GetConnectionString("HomeBankingConnection")));
+            //Add ClientRepository to services
             services.AddScoped<IClientRepository, ClientRepository>();
-            services.AddScoped<IAccountRepository,  AccountRepository>();
+            //Add AccountRepository to services
+            services.AddScoped<IAccountRepository, AccountRepository>();
+            //Add AccountsController
+            services.AddScoped<AccountsController>();
+            //Add CardRepository to services
             services.AddScoped<ICardRepository, CardRepository>();
-            //Autenticacion
+            //Add CardsController
+            services.AddScoped<CardsController>();
+            //Add JsonSerializer options to services
+            services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
+            //authentication
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
             {
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
-                options.LoginPath = new Microsoft.AspNetCore.Http.PathString("/index.html");
+                options.LoginPath = new PathString("/index.html");
             });
-            //Autentication
+            //authorization
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("ClientOnly", policy => policy.RequireClaim("Client")); 
-            });
+                options.AddPolicy("ClientOnly", policy => policy.RequireClaim("Client"));
+                options.AddPolicy("AdminOnly", policy => policy.RequireClaim("Admin"));
 
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -63,14 +78,22 @@ namespace HomeBankingMinHub
 
             app.UseRouting();
 
+            //must use authentication
             app.UseAuthentication();
 
+            //must use authorization
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
+                endpoints.MapControllerRoute
+                (
+                    name: "default",
+                    pattern: "{controller=games}/{action = Get}"
+                );
+
             });
         }
     }

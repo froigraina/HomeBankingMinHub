@@ -1,6 +1,9 @@
-﻿using System;
+﻿using HomeBankingMinHub.Models.Enum;
+using HomeBankingMinHub.Models;
+using System;
+using System.Globalization;
 
-namespace HomeBankingMinHub.Models
+namespace HomeBanking.Models
 {
     public class Card
     {
@@ -12,8 +15,17 @@ namespace HomeBankingMinHub.Models
         public int Cvv { get; set; }
         public DateTime FromDate { get; set; }
         public DateTime ThruDate { get; set; }
-
-        //Relacion client
         public long ClientId { get; set; }
+        public Client Client { get; set; }
+
+        public static bool IsCardType(string cardType)
+        {
+            return CardType.TryParse(cardType, out CardType result);
+        }
+
+        public static bool IsCardColor(string cardColor)
+        {
+            return CardColor.TryParse(cardColor, out CardColor result);
+        }
     }
 }

@@ -1,24 +1,33 @@
-﻿using HomeBankingMinHub.Models;
+﻿using HomeBanking.Models;
+using HomeBankingMinHub.Models;
+using HomeBankingMinHub.Repositories;
 using Microsoft.EntityFrameworkCore;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace HomeBankingMinHub.Repositories
+namespace HomeBanking.Repositories
 {
     public class AccountRepository : RepositoryBase<Account>, IAccountRepository
     {
-        public AccountRepository(HomeBankingContext repositoryContext) : base(repositoryContext)
-        {
-        }
-        public IEnumerable<Account> GetAllAccounts()
-        {
-            return FindAll().Include(account => account.Transactions).ToList();
-        }
+        public AccountRepository(HomeBankingContext repositoryContext) : base(repositoryContext) { }
 
         public Account FindById(long id)
         {
-            return FindByCondition(account => account.Id == id).Include(account => account.Transactions).FirstOrDefault();
+            return FindByCondition(Account => Account.Id == id)
+                .Include(Account => Account.Transactions)
+                .FirstOrDefault();
+        }
+
+        public Account FindByNumber(string number)
+        {
+            return FindByCondition(ac => ac.Number == number)
+                .Include(Account => Account.Transactions)
+                .FirstOrDefault();
+        }
+
+        public IEnumerable<Account> GetAllAccounts()
+        {
+            return FindAll().Include(account => account.Transactions).ToList();
         }
 
         public void Save(Account account)
@@ -30,14 +39,10 @@ namespace HomeBankingMinHub.Repositories
         public IEnumerable<Account> GetAccountsByClient(long clientId)
         {
             return FindByCondition(account => account.ClientId == clientId)
-                .Include(account => account.Transactions)
+                .Include(acc => acc.Transactions)
                 .ToList();
         }
 
-        public Account FindByNumber(string accountNumber)
-        {
-            return FindByCondition(account => account.Number == accountNumber).FirstOrDefault();
-        }
 
     }
 }
