@@ -292,6 +292,42 @@ namespace HomeBankingMinHub.Controllers
             }
         }
 
+        [HttpGet("current/accounts")]
+        public IActionResult GetAccounts()
+        {
+
+            try
+            {
+                string email = User.FindFirst("Client") != null ? User.FindFirst("Client").Value : String.Empty;
+                if (email == String.Empty)
+                {
+                    return Forbid();
+                }
+
+                Client client = _clientRepository.FindByEmail(email);
+
+                if (client == null)
+                {
+                    return Forbid();
+                }
+
+                var accounts = client.Accounts.Select(ac => new AccountDTO
+                {
+                    Id = ac.Id,
+                    Balance = ac.Balance,
+                    CreationDate = ac.CreationDate,
+                    Number = ac.Number
+
+                }).ToList();
+
+                return Ok(accounts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         [HttpPost("current/cards")]
         public IActionResult Post([FromBody] Card card)
         {
@@ -346,6 +382,8 @@ namespace HomeBankingMinHub.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+
 
 
     }
