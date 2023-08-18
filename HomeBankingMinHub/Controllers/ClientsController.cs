@@ -339,7 +339,7 @@ namespace HomeBankingMinHub.Controllers
                 string email = User.FindFirst("Client") != null ? User.FindFirst("Client").Value : String.Empty;
                 if (email == String.Empty)
                 {
-                    return Forbid("Don`t hace authorization");
+                    return Forbid("Don`t have authorization");
                 }
 
                 Client client = _clientRepository.FindByEmail(email);
